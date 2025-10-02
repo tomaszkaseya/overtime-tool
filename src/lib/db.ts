@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import bcrypt from 'bcryptjs';
 
-export type UserRole = 'manager' | 'member';
+export type UserRole = 'admin' | 'manager' | 'member';
 
 let dbInstance: Database.Database | null = null;
 
@@ -31,7 +31,7 @@ export function getDb(): Database.Database {
       email TEXT UNIQUE NOT NULL,
       name TEXT NOT NULL,
       password_hash TEXT NOT NULL,
-      role TEXT NOT NULL CHECK(role IN ('manager','member')),
+      role TEXT NOT NULL CHECK(role IN ('admin','manager','member')),
       created_at INTEGER NOT NULL DEFAULT (strftime('%s','now'))
     );
 
@@ -70,6 +70,34 @@ export function getDb(): Database.Database {
     CREATE INDEX IF NOT EXISTS idx_overtime_user_date ON overtime_entries(user_id, entry_date);
   `);
 
+  // Migration: extend allowed roles to include 'admin' if needed
+  try {
+    const usersTable = db.prepare(`SELECT sql FROM sqlite_master WHERE type='table' AND name='users'`).get() as any;
+    const createSql: string | undefined = usersTable?.sql;
+    if (createSql && createSql.includes("CHECK(role IN ('manager','member'))")) {
+      db.exec(`
+        PRAGMA foreign_keys=off;
+        BEGIN TRANSACTION;
+        CREATE TABLE users_new (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          email TEXT UNIQUE NOT NULL,
+          name TEXT NOT NULL,
+          password_hash TEXT NOT NULL,
+          role TEXT NOT NULL CHECK(role IN ('admin','manager','member')),
+          created_at INTEGER NOT NULL DEFAULT (strftime('%s','now'))
+        );
+        INSERT INTO users_new (id,email,name,password_hash,role,created_at)
+          SELECT id,email,name,password_hash,role,created_at FROM users;
+        DROP TABLE users;
+        ALTER TABLE users_new RENAME TO users;
+        COMMIT;
+        PRAGMA foreign_keys=on;
+      `);
+    }
+  } catch (_) {
+    // ignore
+  }
+
   // Migrations: ensure new columns exist on overtime_entries
   try {
     const cols = db.prepare(`PRAGMA table_info(overtime_entries)`).all() as Array<{ name: string }>;
@@ -88,7 +116,14 @@ export function getDb(): Database.Database {
     // Best-effort migration; ignore if table doesn't exist yet
   }
 
-  // Seed a default manager if none exists
+  // Seed a default admin and manager if none exist (dev/demo)
+  const adminCount = db.prepare('SELECT COUNT(*) as c FROM users WHERE role = ?').get('admin') as { c: number };
+  if (adminCount.c === 0) {
+    const email = 'admin@example.com';
+    const name = 'Default Admin';
+    const passwordHash = bcrypt.hashSync('password123', 10);
+    db.prepare(`INSERT INTO users (email, name, password_hash, role) VALUES (?, ?, ?, 'admin')`).run(email, name, passwordHash);
+  }
   const managerCount = db.prepare('SELECT COUNT(*) as c FROM users WHERE role = ?').get('manager') as { c: number };
   if (managerCount.c === 0) {
     const email = 'manager@example.com';

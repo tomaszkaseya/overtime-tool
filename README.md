@@ -49,22 +49,35 @@ npm run dev
 - `/manager/approvals` – Approvals
 - `/manager/totals` – Monthly totals, detail view and CSV export
 
-### Add more managers
+### Admin super user and user management
 
-Admins (or devs locally) can create additional managers via an authenticated admin endpoint:
+Roles now include `admin`, `manager`, and `member`. A default admin is seeded locally: `admin@example.com` / `password123`.
+
+Admins can manage users via token-protected endpoints (set `ADMIN_TOKEN`):
 
 ```bash
-curl -X POST http://localhost:3000/api/admin/managers \
+curl -X POST http://localhost:3000/api/admin/users \
   -H "Content-Type: application/json" \
   -H "x-admin-token: YOUR_ADMIN_TOKEN" \
   -d '{
     "email": "manager2@example.com",
     "name": "Manager Two",
-    "tempPassword": "password123"
+    "tempPassword": "password123",
+    "role": "manager"
   }'
 ```
 
-Set `ADMIN_TOKEN` in your environment before running the app. A team for the new manager is auto-created.
+Other operations:
+
+```bash
+# List users
+curl -H "x-admin-token: YOUR_ADMIN_TOKEN" http://localhost:3000/api/admin/users
+
+# Delete a user by id
+curl -X DELETE -H "x-admin-token: YOUR_ADMIN_TOKEN" "http://localhost:3000/api/admin/users?id=123"
+```
+
+A team for a new manager is auto-created.
 
 ## Overtime split rules (150% vs 200%)
 
