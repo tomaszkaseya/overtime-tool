@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 import { getDb, getOrCreateManagersTeam } from '@/lib/db';
+import { requireAuth } from '@/lib/auth';
 
 const createSchema = z.object({
   email: z.string().email(),
@@ -10,21 +11,26 @@ const createSchema = z.object({
   role: z.enum(['admin','manager','member']),
 });
 
-function checkAdminAuth(req: Request): boolean {
+async function checkAdminAuth(req: Request): Promise<boolean> {
   const adminToken = process.env.ADMIN_TOKEN;
   const provided = req.headers.get('x-admin-token') || '';
-  return Boolean(adminToken && provided === adminToken);
+  if (adminToken && provided === adminToken) return true;
+  try {
+    const user = await requireAuth();
+    if (user && user.role === 'admin') return true;
+  } catch {}
+  return false;
 }
 
 export async function GET(req: Request) {
-  if (!checkAdminAuth(req)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!(await checkAdminAuth(req))) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   const db = getDb();
   const users = db.prepare(`SELECT id, email, name, role, created_at FROM users ORDER BY created_at DESC`).all() as any[];
   return NextResponse.json({ users });
 }
 
 export async function POST(req: Request) {
-  if (!checkAdminAuth(req)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!(await checkAdminAuth(req))) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   const json = await req.json();
   const parsed = createSchema.safeParse(json);
   if (!parsed.success) return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
@@ -42,7 +48,7 @@ export async function POST(req: Request) {
 }
 
 export async function DELETE(req: Request) {
-  if (!checkAdminAuth(req)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!(await checkAdminAuth(req))) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   const { searchParams } = new URL(req.url);
   const id = Number(searchParams.get('id') || '');
   if (!id || id <= 0) return NextResponse.json({ error: 'id required' }, { status: 400 });

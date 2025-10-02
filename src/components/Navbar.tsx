@@ -21,6 +21,9 @@ export function Navbar({ user }: { user: { name: string; role: string } | null }
           )}
         </div>
         <div className="flex items-center gap-2">
+          {user?.role === 'admin' && (
+            <Link href="/admin/users" className="text-sm underline hidden md:inline">Admin</Link>
+          )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">Theme</Button>

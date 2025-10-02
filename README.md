@@ -48,6 +48,7 @@ npm run dev
 - `/manager/members` – Team members
 - `/manager/approvals` – Approvals
 - `/manager/totals` – Monthly totals, detail view and CSV export
+- `/admin/users` – Admin users management (list/create/delete)
 
 ### Admin super user and user management
 
