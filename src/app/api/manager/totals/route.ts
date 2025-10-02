@@ -14,8 +14,10 @@ export async function GET(req: Request) {
   const team = getOrCreateManagersTeam(user.id);
   const rows = db.prepare(`
     SELECT u.id as user_id, u.name as user_name,
-      SUM(CASE WHEN e.status = 'approved' THEN e.hours ELSE 0 END) as approved_hours,
-      SUM(CASE WHEN e.status = 'pending' THEN e.hours ELSE 0 END) as pending_hours
+      SUM(CASE WHEN e.status = 'approved' THEN COALESCE(e.minutes_150, 0) ELSE 0 END) as approved_minutes_150,
+      SUM(CASE WHEN e.status = 'approved' THEN COALESCE(e.minutes_200, 0) ELSE 0 END) as approved_minutes_200,
+      SUM(CASE WHEN e.status = 'pending' THEN COALESCE(e.minutes_150, 0) ELSE 0 END) as pending_minutes_150,
+      SUM(CASE WHEN e.status = 'pending' THEN COALESCE(e.minutes_200, 0) ELSE 0 END) as pending_minutes_200
     FROM team_members tm
     JOIN users u ON u.id = tm.user_id
     LEFT JOIN overtime_entries e ON e.user_id = u.id AND e.entry_date BETWEEN ? AND ?

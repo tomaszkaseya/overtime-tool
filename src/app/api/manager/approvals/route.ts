@@ -20,7 +20,10 @@ export async function GET(req: Request) {
   const db = getDb();
   const team = getOrCreateManagersTeam(user.id);
   const rows = db.prepare(`
-    SELECT e.id, e.user_id, u.name as user_name, e.entry_date as date, e.hours, e.note, e.status
+    SELECT e.id, e.user_id, u.name as user_name, e.entry_date as date, e.hours,
+      e.start_time as startTime, e.end_time as endTime,
+      e.minutes_150 as minutes150, e.minutes_200 as minutes200,
+      e.note, e.status
     FROM overtime_entries e
     JOIN team_members tm ON tm.user_id = e.user_id
     JOIN users u ON u.id = e.user_id

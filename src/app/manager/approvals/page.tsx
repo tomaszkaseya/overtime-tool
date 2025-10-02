@@ -53,7 +53,8 @@ export default function ApprovalsPage() {
         {entries.map(e => (
           <li key={e.id} className="border rounded p-3 flex items-center justify-between">
             <div className="space-y-1">
-              <div className="font-medium">{e.user_name} • {e.date} • {e.hours}h</div>
+              <div className="font-medium">{e.user_name} • {e.date} • {e.startTime}–{e.endTime} ({Number(e.hours).toFixed(2)}h)</div>
+              <div className="text-xs">150%: {Math.round((e.minutes150 || 0) / 60 * 100) / 100}h • 200%: {Math.round((e.minutes200 || 0) / 60 * 100) / 100}h</div>
               {e.note && <div className="text-sm text-gray-600">{e.note}</div>}
               <div className="text-xs">
                 <span

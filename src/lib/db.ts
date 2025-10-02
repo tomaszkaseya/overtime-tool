@@ -55,6 +55,12 @@ export function getDb(): Database.Database {
       user_id INTEGER NOT NULL,
       entry_date TEXT NOT NULL, -- YYYY-MM-DD
       hours REAL NOT NULL,
+      start_time TEXT, -- HH:MM
+      end_time TEXT,   -- HH:MM
+      minutes_150 INTEGER, -- nullable for legacy
+      minutes_200 INTEGER, -- nullable for legacy
+      is_public_holiday INTEGER NOT NULL DEFAULT 0,
+      is_designated_day_off INTEGER NOT NULL DEFAULT 0,
       note TEXT,
       status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','approved','rejected')),
       created_at INTEGER NOT NULL DEFAULT (strftime('%s','now')),
@@ -63,6 +69,24 @@ export function getDb(): Database.Database {
 
     CREATE INDEX IF NOT EXISTS idx_overtime_user_date ON overtime_entries(user_id, entry_date);
   `);
+
+  // Migrations: ensure new columns exist on overtime_entries
+  try {
+    const cols = db.prepare(`PRAGMA table_info(overtime_entries)`).all() as Array<{ name: string }>;
+    const has = (name: string) => cols.some((c) => c.name === name);
+    const pendingAlters: string[] = [];
+    if (!has('start_time')) pendingAlters.push(`ALTER TABLE overtime_entries ADD COLUMN start_time TEXT`);
+    if (!has('end_time')) pendingAlters.push(`ALTER TABLE overtime_entries ADD COLUMN end_time TEXT`);
+    if (!has('minutes_150')) pendingAlters.push(`ALTER TABLE overtime_entries ADD COLUMN minutes_150 INTEGER`);
+    if (!has('minutes_200')) pendingAlters.push(`ALTER TABLE overtime_entries ADD COLUMN minutes_200 INTEGER`);
+    if (!has('is_public_holiday')) pendingAlters.push(`ALTER TABLE overtime_entries ADD COLUMN is_public_holiday INTEGER NOT NULL DEFAULT 0`);
+    if (!has('is_designated_day_off')) pendingAlters.push(`ALTER TABLE overtime_entries ADD COLUMN is_designated_day_off INTEGER NOT NULL DEFAULT 0`);
+    for (const sql of pendingAlters) {
+      db.exec(sql);
+    }
+  } catch (_) {
+    // Best-effort migration; ignore if table doesn't exist yet
+  }
 
   // Seed a default manager if none exists
   const managerCount = db.prepare('SELECT COUNT(*) as c FROM users WHERE role = ?').get('manager') as { c: number };
