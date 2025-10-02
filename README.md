@@ -1,36 +1,52 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Overtime Tool
+
+A lightweight, role‑based app for tracking and approving employee overtime. Employees can log their own overtime; managers can manage team members, review requests, and see monthly totals.
+
+## Features
+
+- **Authentication**: Email/password login with session-based auth
+- **Role-based access**: Manager vs. Employee views
+- **Employee – My Overtime**: Log and view your own overtime entries (`/me`)
+- **Manager – Team Members**: Add and view team members (`/manager/members`)
+- **Manager – Approvals**: Review and approve/reject overtime requests (`/manager/approvals`)
+- **Manager – Totals**: View monthly hours per member (`/manager/totals`)
+- **Logout**: End session from the dashboard
+- **Tech stack**: Next.js App Router, TypeScript, Tailwind CSS
 
 ## Getting Started
 
-First, run the development server:
+1. Install dependencies
+
+```bash
+npm install
+```
+
+2. Run the development server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3. Open `http://localhost:3000/login`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Demo manager credentials (for local/dev): `manager@example.com` / `password123`
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Key Routes
 
-## Learn More
+- `/login` – Sign in
+- `/` – Dashboard (role-aware)
+- `/me` – Employee overtime
+- `/manager/members` – Team members
+- `/manager/approvals` – Approvals
+- `/manager/totals` – Monthly totals
 
-To learn more about Next.js, take a look at the following resources:
+## Project Structure (high level)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `src/app/page.tsx` – Dashboard
+- `src/app/login/page.tsx` – Login page
+- `src/app/me` – Employee area
+- `src/app/manager/*` – Manager tools
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Notes
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- The authentication endpoints live under `/api/auth/*`. Swap these out to integrate with your own identity provider or user store.
