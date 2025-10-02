@@ -49,6 +49,23 @@ npm run dev
 - `/manager/approvals` – Approvals
 - `/manager/totals` – Monthly totals, detail view and CSV export
 
+### Add more managers
+
+Admins (or devs locally) can create additional managers via an authenticated admin endpoint:
+
+```bash
+curl -X POST http://localhost:3000/api/admin/managers \
+  -H "Content-Type: application/json" \
+  -H "x-admin-token: YOUR_ADMIN_TOKEN" \
+  -d '{
+    "email": "manager2@example.com",
+    "name": "Manager Two",
+    "tempPassword": "password123"
+  }'
+```
+
+Set `ADMIN_TOKEN` in your environment before running the app. A team for the new manager is auto-created.
+
 ## Overtime split rules (150% vs 200%)
 
 The app computes a split of overtime minutes into 150% and 200% according to simplified Polish Labour Code rules:
