@@ -5,11 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Toast } from "@/components/ui/toast";
 
-type User = { id: number; email: string; name: string; role: "admin" | "manager" | "member" };
+type User = { id: number; email: string; name: string; role: "admin" | "manager" | "member"; manager_id?: number | null; manager_name?: string | null };
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
-  const [form, setForm] = useState({ email: "", name: "", tempPassword: "", role: "member" as "admin" | "manager" | "member" });
+  const [form, setForm] = useState({ email: "", name: "", tempPassword: "", role: "member" as "admin" | "manager" | "member", managerId: "" as string | "" });
   const [toast, setToast] = useState<{ open: boolean; title?: string; description?: string }>({ open: false });
 
   async function load() {
@@ -26,10 +26,16 @@ export default function AdminUsersPage() {
     const res = await fetch("/api/admin/users", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form)
+      body: JSON.stringify({
+        email: form.email,
+        name: form.name,
+        tempPassword: form.tempPassword,
+        role: form.role,
+        managerId: form.role === 'member' && form.managerId ? Number(form.managerId) : undefined,
+      })
     });
     if (res.ok) {
-      setForm({ email: "", name: "", tempPassword: "", role: "member" });
+      setForm({ email: "", name: "", tempPassword: "", role: "member", managerId: "" });
       setToast({ open: true, title: "Created", description: "User created." });
       await load();
     } else {
@@ -75,6 +81,17 @@ export default function AdminUsersPage() {
             <option value="admin">admin</option>
           </select>
         </div>
+        {form.role === 'member' && (
+          <div className="flex flex-col">
+            <label className="text-sm">Manager</label>
+            <select className="border p-2 rounded" value={form.managerId} onChange={e => setForm(f => ({ ...f, managerId: e.target.value }))}>
+              <option value="">Select manager…</option>
+              {users.filter(u => u.role === 'manager').map(m => (
+                <option key={m.id} value={m.id}>{m.name} ({m.email})</option>
+              ))}
+            </select>
+          </div>
+        )}
         <Button type="submit">Create</Button>
       </form>
 
@@ -85,6 +102,7 @@ export default function AdminUsersPage() {
             <th className="p-2 border-b">Email</th>
             <th className="p-2 border-b">Name</th>
             <th className="p-2 border-b">Role</th>
+            <th className="p-2 border-b">Manager</th>
             <th className="p-2 border-b">Actions</th>
           </tr>
         </thead>
@@ -95,6 +113,7 @@ export default function AdminUsersPage() {
               <td className="p-2 border-b">{u.email}</td>
               <td className="p-2 border-b">{u.name}</td>
               <td className="p-2 border-b">{u.role}</td>
+              <td className="p-2 border-b">{u.manager_name || '-'}</td>
               <td className="p-2 border-b">
                 <Button variant="outline" size="sm" onClick={() => deleteUser(u.id)}>Delete</Button>
               </td>

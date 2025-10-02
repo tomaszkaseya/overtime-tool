@@ -9,6 +9,7 @@ const createSchema = z.object({
   name: z.string().min(1),
   tempPassword: z.string().min(6),
   role: z.enum(['admin','manager','member']),
+  managerId: z.number().int().positive().optional(),
 });
 
 async function checkAdminAuth(req: Request): Promise<boolean> {
@@ -25,7 +26,15 @@ async function checkAdminAuth(req: Request): Promise<boolean> {
 export async function GET(req: Request) {
   if (!(await checkAdminAuth(req))) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   const db = getDb();
-  const users = db.prepare(`SELECT id, email, name, role, created_at FROM users ORDER BY created_at DESC`).all() as any[];
+  const users = db.prepare(`
+    SELECT u.id, u.email, u.name, u.role, u.created_at,
+      mgr.id as manager_id, mgr.name as manager_name
+    FROM users u
+    LEFT JOIN team_members tm ON tm.user_id = u.id
+    LEFT JOIN teams t ON t.id = tm.team_id
+    LEFT JOIN users mgr ON mgr.id = t.manager_id
+    ORDER BY u.created_at DESC
+  `).all() as any[];
   return NextResponse.json({ users });
 }
 
@@ -43,6 +52,9 @@ export async function POST(req: Request) {
   const userId = Number(info.lastInsertRowid);
   if (parsed.data.role === 'manager') {
     getOrCreateManagersTeam(userId);
+  } else if (parsed.data.role === 'member' && parsed.data.managerId) {
+    const team = getOrCreateManagersTeam(parsed.data.managerId);
+    db.prepare(`INSERT INTO team_members (team_id, user_id) VALUES (?, ?)`).run(team.id, userId);
   }
   return NextResponse.json({ id: userId });
 }
