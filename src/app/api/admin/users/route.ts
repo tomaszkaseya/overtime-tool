@@ -51,7 +51,13 @@ export async function POST(req: Request) {
     .run(parsed.data.email, parsed.data.name, passwordHash, parsed.data.role);
   const userId = Number(info.lastInsertRowid);
   if (parsed.data.role === 'manager') {
+    // Every manager gets their own team
     getOrCreateManagersTeam(userId);
+    // If a managerId is provided, also assign this manager as a member of another manager's team
+    if (parsed.data.managerId) {
+      const team = getOrCreateManagersTeam(parsed.data.managerId);
+      db.prepare(`INSERT INTO team_members (team_id, user_id) VALUES (?, ?)`).run(team.id, userId);
+    }
   } else if (parsed.data.role === 'member' && parsed.data.managerId) {
     const team = getOrCreateManagersTeam(parsed.data.managerId);
     db.prepare(`INSERT INTO team_members (team_id, user_id) VALUES (?, ?)`).run(team.id, userId);

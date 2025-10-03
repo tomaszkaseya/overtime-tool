@@ -31,7 +31,7 @@ export default function AdminUsersPage() {
         name: form.name,
         tempPassword: form.tempPassword,
         role: form.role,
-        managerId: form.role === 'member' && form.managerId ? Number(form.managerId) : undefined,
+        managerId: (form.role === 'member' || form.role === 'manager') && form.managerId ? Number(form.managerId) : undefined,
       })
     });
     if (res.ok) {
@@ -81,7 +81,7 @@ export default function AdminUsersPage() {
             <option value="admin">admin</option>
           </select>
         </div>
-        {form.role === 'member' && (
+        {(form.role === 'member' || form.role === 'manager') && (
           <div className="flex flex-col">
             <label className="text-sm">Manager</label>
             <select className="border p-2 rounded" value={form.managerId} onChange={e => setForm(f => ({ ...f, managerId: e.target.value }))}>
