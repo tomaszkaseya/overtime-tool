@@ -61,12 +61,7 @@ export default function Calendar({ value, onChange, initialMonth }: CalendarProp
     return rows;
   }, [viewMonth]);
 
-  function prevMonth() {
-    setViewMonth((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1));
-  }
-  function nextMonth() {
-    setViewMonth((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1));
-  }
+  // Month navigation disabled per requirements
 
   const monthLabel = useMemo(() => {
     return viewMonth.toLocaleString(undefined, { month: "long", year: "numeric" });
@@ -74,10 +69,8 @@ export default function Calendar({ value, onChange, initialMonth }: CalendarProp
 
   return (
     <div className="border rounded p-3 w-full max-w-sm">
-      <div className="flex items-center justify-between mb-2">
-        <button type="button" className="px-2 py-1 border rounded" onClick={prevMonth} aria-label="Previous month">‹</button>
+      <div className="flex items-center justify-center mb-2">
         <div className="font-medium select-none">{monthLabel}</div>
-        <button type="button" className="px-2 py-1 border rounded" onClick={nextMonth} aria-label="Next month">›</button>
       </div>
       <div className="grid grid-cols-7 text-xs text-gray-600 mb-1">
         <div className="text-center">Sun</div>
