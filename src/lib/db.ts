@@ -76,6 +76,7 @@ export function getDb(): Database.Database {
       start_date TEXT NOT NULL, -- YYYY-MM-DD (inclusive)
       end_date TEXT NOT NULL,   -- YYYY-MM-DD (inclusive)
       opened_by_manager_id INTEGER NOT NULL,
+      reason TEXT,
       created_at INTEGER NOT NULL DEFAULT (strftime('%s','now')),
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
       FOREIGN KEY (opened_by_manager_id) REFERENCES users(id) ON DELETE SET NULL
@@ -127,6 +128,19 @@ export function getDb(): Database.Database {
     }
   } catch (_) {
     // Best-effort migration; ignore if table doesn't exist yet
+  }
+
+  // Migrations: ensure new columns exist on overtime_periods
+  try {
+    const cols = db.prepare(`PRAGMA table_info(overtime_periods)`).all() as Array<{ name: string }>;
+    const has = (name: string) => cols.some((c) => c.name === name);
+    const pendingAlters: string[] = [];
+    if (!has('reason')) pendingAlters.push(`ALTER TABLE overtime_periods ADD COLUMN reason TEXT`);
+    for (const sql of pendingAlters) {
+      db.exec(sql);
+    }
+  } catch (_) {
+    // ignore if table doesn't exist yet
   }
 
   // Seed a default admin and manager if none exist (dev/demo)

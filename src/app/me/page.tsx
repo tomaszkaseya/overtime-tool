@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useState } from 'react';
-import Calendar from '@/components/Calendar';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Toast } from '@/components/ui/toast';
@@ -88,7 +87,7 @@ export default function MyOvertimePage() {
       <form onSubmit={addEntry} className="flex gap-4 items-start flex-wrap">
         <div className="flex flex-col gap-2">
           <label className="text-sm">Date</label>
-          <Calendar value={date} onChange={setDate} initialMonth={month} />
+          <Input type="date" value={date} onChange={e => setDate(e.target.value)} />
         </div>
         <div className="flex flex-col">
           <label className="text-sm">Start Time</label>
