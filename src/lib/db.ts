@@ -68,6 +68,19 @@ export function getDb(): Database.Database {
     );
 
     CREATE INDEX IF NOT EXISTS idx_overtime_user_date ON overtime_entries(user_id, entry_date);
+
+    -- Periods that allow members to log overtime within a date range
+    CREATE TABLE IF NOT EXISTS overtime_periods (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      start_date TEXT NOT NULL, -- YYYY-MM-DD (inclusive)
+      end_date TEXT NOT NULL,   -- YYYY-MM-DD (inclusive)
+      opened_by_manager_id INTEGER NOT NULL,
+      created_at INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (opened_by_manager_id) REFERENCES users(id) ON DELETE SET NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_periods_user_dates ON overtime_periods(user_id, start_date, end_date);
   `);
 
   // Migration: extend allowed roles to include 'admin' if needed
@@ -165,6 +178,16 @@ export function getOrCreateManagersTeam(managerId: number): { id: number; name: 
   if (existing) return existing;
   const info = db.prepare('INSERT INTO teams (manager_id, name) VALUES (?, ?)').run(managerId, 'My Team');
   return { id: Number(info.lastInsertRowid), name: 'My Team' };
+}
+
+export function userHasOpenPeriod(userId: number, dateYmd: string): boolean {
+  const db = getDb();
+  const row = db.prepare(`
+    SELECT 1 FROM overtime_periods
+    WHERE user_id = ? AND start_date <= ? AND end_date >= ?
+    LIMIT 1
+  `).get(userId, dateYmd, dateYmd) as any;
+  return Boolean(row);
 }
 
 

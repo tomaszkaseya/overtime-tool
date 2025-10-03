@@ -11,6 +11,7 @@ A lightweight, role‑based app for tracking and approving employee overtime. Em
   - Auto split into 150% vs 200% minutes based on Polish Labour Code rules
   - Flags for Public Holiday and Designated Day Off
 - **Manager – Team Members**: Add and view team members (`/manager/members`)
+- **Manager – Open Overtime Periods**: From Team Members page, open a date range during which members can log overtime
 - **Manager – Approvals**: Review and approve/reject overtime requests (`/manager/approvals`)
   - Shows Start–End and 150%/200% split per entry
 - **Manager – Totals**: View monthly hours per member (`/manager/totals`)
@@ -46,6 +47,7 @@ npm run dev
 - `/` – Dashboard (role-aware)
 - `/me` – Employee overtime
 - `/manager/members` – Team members
+- `/api/manager/periods` – Open an overtime period for a team member (POST)
 - `/manager/approvals` – Approvals
 - `/manager/totals` – Monthly totals, detail view and CSV export
 - `/admin/users` – Admin users management (list/create/delete)
@@ -53,6 +55,24 @@ npm run dev
 ### Admin super user and user management
 
 Roles now include `admin`, `manager`, and `member`. A default admin is seeded locally: `admin@example.com` / `password123`.
+
+### Overtime Periods
+
+- Employees can only log overtime on dates within an open period.
+- Managers open a period per member on the Team Members page by choosing Start and End dates and clicking "Open Period".
+- API:
+
+```bash
+curl -X POST http://localhost:3000/api/manager/periods \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userId": 123,
+    "startDate": "2025-10-01",
+    "endDate": "2025-10-31"
+  }'
+```
+
+If an employee attempts to log outside an open period, the UI shows: "Overtime period not open. Ask your manager to open a period for this date."
 
 Admins can manage users via token-protected endpoints (set `ADMIN_TOKEN`):
 

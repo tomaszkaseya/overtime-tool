@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { getDb } from '@/lib/db';
+import { getDb, userHasOpenPeriod } from '@/lib/db';
 import { requireAuth } from '@/lib/auth';
 import { computeOvertimeSplit, isValidDateYmd, isValidTimeHm } from '@/lib/overtime';
 
@@ -25,6 +25,10 @@ export async function POST(req: Request) {
   const json = await req.json();
   const parsed = createSchema.safeParse(json);
   if (!parsed.success) return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
+  // Enforce open period
+  if (!userHasOpenPeriod(user.id, parsed.data.date)) {
+    return NextResponse.json({ error: 'OVERTIME_PERIOD_NOT_OPEN' }, { status: 403 });
+  }
   const split = computeOvertimeSplit({
     date: parsed.data.date,
     startTime: parsed.data.startTime,

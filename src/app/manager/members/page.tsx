@@ -10,6 +10,9 @@ export default function MembersPage() {
   const [name, setName] = useState('');
   const [tempPassword, setTempPassword] = useState('Temp1234');
   const [error, setError] = useState<string | null>(null);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [toast, setToast] = useState<{ open: boolean; title: string; description?: string } | null>(null);
 
   async function load() {
     const res = await fetch('/api/manager/members');
@@ -64,10 +67,38 @@ export default function MembersPage() {
           <li key={m.id} className="border rounded p-3">
             <div className="font-medium">{m.name}</div>
             <div className="text-sm text-gray-600">{m.email}</div>
+            <div className="mt-3 flex items-end gap-2 flex-wrap">
+              <div className="flex flex-col">
+                <label className="text-sm">Start</label>
+                <Input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
+              </div>
+              <div className="flex flex-col">
+                <label className="text-sm">End</label>
+                <Input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
+              </div>
+              <Button
+                variant="outline"
+                onClick={async () => {
+                  setError(null);
+                  if (!startDate || !endDate) { setError('Start and End required'); return; }
+                  const res = await fetch('/api/manager/periods', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: m.id, startDate, endDate }),
+                  });
+                  if (res.ok) {
+                    setToast({ open: true, title: 'Period opened', description: `${startDate} → ${endDate}` });
+                  } else {
+                    const data = await res.json().catch(() => ({}));
+                    setError(data.error || 'Failed to open period');
+                  }
+                }}
+              >Open Period</Button>
+            </div>
           </li>
         ))}
       </ul>
-      <Toast title={error ? 'Error' : undefined} description={error || undefined} open={Boolean(error)} onOpenChange={(o) => !o && setError(null)} />
+      <Toast title={error ? 'Error' : toast?.title} description={error ? error : toast?.description} open={Boolean(error) || Boolean(toast?.open)} onOpenChange={(o) => { if (!o) { setError(null); setToast(null); } }} />
     </div>
   );
 }

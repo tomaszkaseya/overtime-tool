@@ -68,7 +68,11 @@ export default function MyOvertimePage() {
       await load();
     } else {
       const data = await res.json().catch(() => ({}));
-      setError(data.error || 'Failed to add');
+      if (data.error === 'OVERTIME_PERIOD_NOT_OPEN') {
+        setError('Overtime period not open. Ask your manager to open a period for this date.');
+      } else {
+        setError(data.error || 'Failed to add');
+      }
     }
   }
 
