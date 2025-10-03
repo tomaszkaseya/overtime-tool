@@ -21,6 +21,11 @@ export function Navbar({ user }: { user: { name: string; role: string } | null }
           )}
         </div>
         <div className="flex items-center gap-2">
+          {user && (
+            <span className="hidden sm:inline text-sm text-foreground/70">
+              {user.name} ({user.role})
+            </span>
+          )}
           {user?.role === 'admin' && (
             <Link href="/admin/users" className="text-sm underline hidden md:inline">Admin</Link>
           )}
